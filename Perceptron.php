@@ -1,27 +1,36 @@
 <?php
 
 
+/**
+ * Class Perceptron.
+ * Reprodução do Modelo Redes Neurais "Perceptron" em Python usando PHP.
+ * Este modelo foi reproduzido usando como base as aulas do professor Everton Gomede e também o tutoria
+ * https://medium.com/@urapython.community/perceptron-com-python-uma-introdu%C3%A7%C3%A3o-f19aaf9e9b64
+ */
 class Perceptron
 {
     /**
+     * Taxa de Aprendizado
      * @var float
      */
     public $taxa_aprendizado;
 
     /**
-     * @var int
+     * Quantidade de Epocas
+     * @var float
      */
-    public $interacoes;
+    private int $epocas;
+
 
     /**
      * Perceptron constructor.
      * @param float $taxa_aprendizado
-     * @param int $interacoes
+     * @param int $epocas
      */
-    public function __construct($taxa_aprendizado = 0.01, $interacoes = 10)
+    public function __construct($taxa_aprendizado = 0.01, $epocas = 100)
     {
         $this->taxa_aprendizado = $taxa_aprendizado;
-        $this->interacoes = $interacoes;
+        $this->epocas = $epocas;
     }
 
     /**
@@ -36,39 +45,67 @@ class Perceptron
         }
 
         $size = max(array_map('count', $X));
-        $weight_ = $this->randoDecimal($size);
+        $weight_ = collect($this->randoDecimal($size));
         $errors_ = [];
 
-        for ($i = 0; $i <= $this->interacoes; $i++) {
-            $erros = [];
+        for ($i_epocas = 0; $i_epocas <= $this->epocas; $i_epocas++) {
 
+            $errors = 0;
             for ($i = 0; $i < count($X); $i++) {
 
                 $target = $y[$i];
                 $xi = $X[$i];
 
-                $update = $this->taxa_aprendizado * ($target - $this->predict($xi, $weight_));
-                dd($update);
+                // Taxa de Aprendizado
+                $update = ($target - $this->predict($xi, $weight_));
+
+                // Atulizando os pesos e também o Bias
+                $weight_ = $weight_->map(function ($item, $key) use ($update, $xi) {
+
+                    // define o Bias
+                    if ($key == 0) {
+                        return $item + $update;
+                    }
+
+                    return $item + ($update * $xi[$key - 1]);
+                });
+
+                $errors += $update > 0 ? 1 : 0;
             }
+
+            $errors_[] = $errors;
         }
     }
 
-    public function predict($X, $weight_)
+    /**
+     * Função Predict ou Função de Ativação Degral Bipolar (Step)
+     * @param $X
+     * @param $weight_
+     * @return int
+     */
+    public function predict($X, $weight_): int
     {
-        return $this->net_input($X, $weight_);
+        return $this->net_input($X, $weight_) >= 0 ? 1 : -1;
     }
 
-
+    /**
+     * Função NetInput que é responsavel por fazer a multiplicação das Matrizes (Entradas x Pesos)
+     * @param $X
+     * @param $weight_
+     * @return array|mixed
+     */
     public function net_input($X, $weight_)
     {
+        $weight_ = $weight_->toArray();
 
         $bias = $weight_[0];
         unset($weight_[0]);
+
+
         $weight_ = array_values($weight_);
         $X = array_values($X);
 
         return $this->multiply($X, $weight_) + $bias;
-
     }
 
     /**
@@ -86,7 +123,7 @@ class Perceptron
     }
 
     /**
-     * Map multiply against multiple arrays
+     * Função que realiza as multiplicações de matrizes
      *
      * [x₁ * y₁, x₂ * y₂, ... ]
      *
