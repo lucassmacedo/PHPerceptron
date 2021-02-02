@@ -40,12 +40,16 @@ class Perceptron
      */
     public function fit($X, $y)
     {
+        // Confere se existe uma diferença entre os tamanhos dos arrays/matrizes
         if (count($X) <> count($y)) {
-            return "Error";
+            return "Matriz X e y de tamanhos diferentes.";
         }
 
         $size = max(array_map('count', $X));
+
+        // Inicia os pesos com valores aleatórios
         $weight_ = collect($this->randoDecimal($size));
+
         $errors_ = [];
 
         for ($i_epocas = 0; $i_epocas <= $this->epocas; $i_epocas++) {
@@ -62,11 +66,12 @@ class Perceptron
                 // Atulizando os pesos e também o Bias
                 $weight_ = $weight_->map(function ($item, $key) use ($update, $xi) {
 
-                    // define o Bias
+                    // Atualiza o Bias
                     if ($key == 0) {
                         return $item + $update;
                     }
 
+                    // Atualiza os pesos
                     return $item + ($update * $xi[$key - 1]);
                 });
 
